@@ -1,0 +1,2 @@
+# Seanify
+A music player
