@@ -26,14 +26,15 @@ class MediaWindow(QMainWindow):
 
         # 2.2 Sliders
         # 2.2.1 Duration slider
-        self.durationSlider = QSlider()
-        self.durationSlider.setOrientation(Qt.Orientation.Horizontal)
+        self.durationSlider = QSlider(Qt.Orientation.Horizontal)
         self.durationLabel = QLabel("Totale duur: 0 seconden")
         self.durationLabel.setAlignment(Qt.AlignCenter)
 
         # 2.2.2 Volume slider
-        self.volumeSlider = QSlider()
-        self.volumeSlider.setOrientation(Qt.Orientation.Vertical)
+        self.volumeSlider = QSlider(Qt.Orientation.Vertical)
+        self.volumeSlider.setRange(0, 100)
+        self.volumeSlider.setValue(50)
+        self.volumeSlider.valueChanged.connect(self.change_volume)
 
         # 2.3 Control buttons
         # 2.3.1 Control methods
@@ -90,27 +91,6 @@ class MediaWindow(QMainWindow):
         nextSongButton.setFixedSize(*button_size)
         previousSongButton.setFixedSize(*button_size)
 
-        # 2.4 Volume controls
-        # 2.4.1 Control methods
-        @Slot()
-        def raiseVolume():
-            self.volumeLevel += 0.1
-            print(f"Raising volume: {self.volumeLevel}")
-
-        @Slot()
-        def lowerVolume():
-            self.volumeLevel -= 0.1
-            print(f"Lowering volume: {self.volumeLevel}")
-
-        # 2.4.2 Buttons themselves
-        volumeUpButton = QPushButton()
-        volumeUpButton.setIcon(QIcon("images/controls/volume-up.svg"))
-        volumeUpButton.clicked.connect(raiseVolume)
-
-        volumeDownButton = QPushButton()
-        volumeDownButton.setIcon(QIcon("images/controls/volume-down.svg"))
-        volumeDownButton.clicked.connect(lowerVolume)
-
         # 3. Adding widgets
         # 3.1 Control buttons
         layout.addWidget(playButton, 1, 2)
@@ -118,11 +98,7 @@ class MediaWindow(QMainWindow):
         layout.addWidget(nextSongButton, 1, 3)
         layout.addWidget(previousSongButton, 1, 0)
 
-        # 3.2
-        layout.addWidget(volumeDownButton, 1, 4)
-        layout.addWidget(volumeUpButton, 1, 5)
-
-        # 3.3 Slider
+        # 3.2 Slider
         layout.addWidget(self.durationSlider)
         layout.addWidget(self.durationLabel)
 
@@ -133,9 +109,10 @@ class MediaWindow(QMainWindow):
         self.player.durationChanged.connect(self.update_duration)
 
         # 4. Update the slider position
+        # 4.1 Duration slider
         self.player.positionChanged.connect(self.durationSlider.setValue)
 
-        # 5. Media laden (vervang met een echt bestand op jouw pc)
+        # 5. Load media
         self.player.setSource(QUrl.fromLocalFile("./songs/wiley.mp3"))
         self.player.play()
 
@@ -148,9 +125,10 @@ class MediaWindow(QMainWindow):
         totale_seconden = duration_ms // 1000
         self.durationLabel.setText(f"Totale duur: {totale_seconden} seconden")
 
-    def update_volume(self):
-        self.volumeSlider.setMaximum(1.0)
-        self.volumeSlider.setMinimum(0.0)
+    def change_volume(self, value):
+        self.volumeLevel = value / 100
+        self.audioOutput.setVolume(self.volumeLevel)
+        print(f"Current volume: {self.volumeLevel}")
 
 
 # app = QApplication(sys.argv)
