@@ -1,7 +1,8 @@
+from pathlib import Path
 from PySide6.QtGui import QIcon
-from PySide6.QtCore import QUrl, Qt, Slot, QDirListing
+from PySide6.QtCore import QUrl, Qt, Slot
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput, QMediaMetaData
-from PySide6.QtWidgets import QMainWindow, QLabel, QSlider, QGridLayout, QWidget, QPushButton
+from PySide6.QtWidgets import QMainWindow, QLabel, QSlider, QGridLayout, QWidget, QPushButton, QListWidget, QListWidgetItem
 
 
 class MediaWindow(QMainWindow):
@@ -16,6 +17,19 @@ class MediaWindow(QMainWindow):
         layout = QGridLayout(container)
 
         # 2. Multimedia setup
+        # 2.0 Library
+        self.songList = QListWidget()
+        layout.addWidget(self.songList, 0, 5, 4, 2)
+        songs_path = Path("/Users/seansteenhuis/Documents/Music/Songs")
+
+        for song_path in songs_path.iterdir():
+            if song_path.is_file() and song_path.suffix.lower() in {".mp3", ".wav", ".m4a", ".flac"}:
+                item = QListWidgetItem(song_path.stem)
+                item.setData(Qt.ItemDataRole.UserRole, str(song_path))
+                self.songList.addItem(item)
+
+        self.songList.itemDoubleClicked.connect(self.play_selected_song)
+
         # 2.1 Player
         self.player = QMediaPlayer()
         self.audioOutput = QAudioOutput()
@@ -139,14 +153,11 @@ class MediaWindow(QMainWindow):
         formattedDuration = QLabel(f"{playedDuration}/{totalDurationMinutes}:{totalDurationSeconds}")
         layout.addWidget(formattedDuration)
 
-        # 4. Load media
-        self.player.setSource(QUrl.fromLocalFile("/Users/seansteenhuis/Documents/Music/Songs/WileyFlow.mp3"))
-        self.player.play()
+    def play_selected_song(self, item):
+        song_path = item.data(Qt.ItemDataRole.UserRole)
 
-        # 5. Get directory files
-        self.songs = QDirListing("/Users/seansteenhuis/Documents/Music/Songs")
-        # for song in self.songs:
-        #     print(f"Filename {song.absoluteFilePath()}")
+        self.player.setSource(QUrl.fromLocalFile(song_path))
+        self.player.play()
 
     def update_play_button(self, state):
         is_playing = state == QMediaPlayer.PlaybackState.PlayingState
