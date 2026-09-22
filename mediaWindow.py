@@ -1,6 +1,6 @@
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import QUrl, Qt, Slot, QDirListing
-from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
+from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput, QMediaMetaData
 from PySide6.QtWidgets import QMainWindow, QLabel, QSlider, QGridLayout, QWidget, QPushButton
 
 
@@ -94,6 +94,15 @@ class MediaWindow(QMainWindow):
         nextSongButton.setFixedSize(*button_size)
         previousSongButton.setFixedSize(*button_size)
 
+        # 2.4 Metadata
+        # 2.4.1 Title
+        self.titleLabel = QLabel("Loading title...")
+        self.player.metaDataChanged.connect(self.update_title)
+
+        # 2.4.2 Artist
+        self.artistLabel = QLabel("Loading artist...")
+        self.player.metaDataChanged.connect(self.update_artist)
+
         # 3. Adding widgets
         # 3.1 Control buttons
         layout.addWidget(playButton, 1, 2)
@@ -106,7 +115,14 @@ class MediaWindow(QMainWindow):
 
         layout.addWidget(self.volumeSlider, 1, 4, 2, 1)
 
-        # 3.3 Duration in numbers
+        # 3.3 Metadata
+        # 3.3.1 Title
+        layout.addWidget(self.titleLabel)
+
+        # 3.3.2 Artist
+        layout.addWidget(self.artistLabel)
+
+        # 3.4 Duration in numbers
         rawSeconds = self.player.position() // 1000
         seconds = rawSeconds
         if rawSeconds % 60 == 0:
@@ -122,13 +138,27 @@ class MediaWindow(QMainWindow):
         layout.addWidget(formattedDuration)
 
         # 4. Load media
-        self.player.setSource(QUrl.fromLocalFile("./songs/wiley.mp3"))
+        self.player.setSource(QUrl.fromLocalFile("/Users/seansteenhuis/Documents/Music/Songs/WileyFlow.mp3"))
         self.player.play()
 
         # 5. Get directory files
         self.songs = QDirListing("/Users/seansteenhuis/Documents/Music/Songs")
         # for song in self.songs:
         #     print(f"Filename {song.absoluteFilePath()}")
+
+    def update_title(self):
+        title = self.player.metaData().value(QMediaMetaData.Title)
+        if title:
+            self.titleLabel.setText(str(title))
+        else:
+            self.titleLabel.setText("Unknown title")
+
+    def update_artist(self):
+        artistName = self.player.metaData().value(QMediaMetaData.ContributingArtist)
+        if artistName:
+            self.artistLabel.setText(str(artistName).strip("[]'"))
+        else:
+            self.artistLabel.setText("Unknown artist")
 
     def update_duration_range(self, duration_ms):
         self.durationSlider.setRange(0, duration_ms)
