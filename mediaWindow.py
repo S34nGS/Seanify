@@ -28,8 +28,8 @@ class MediaWindow(QMainWindow):
         self.durationSlider = QSlider(Qt.Orientation.Horizontal)
         self.durationSlider.sliderMoved.connect(self.change_duration)
 
-        # self.player.positionChanged.connect(self.durationSlider.setValue)
         self.player.durationChanged.connect(self.update_duration_slider_position)
+        self.player.positionChanged.connect(self.durationSlider.setValue)
 
         # 2.2.2 Volume slider
         self.volumeSlider = QSlider(Qt.Orientation.Vertical)
