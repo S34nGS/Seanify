@@ -1,8 +1,7 @@
-import sys
 from PySide6.QtGui import QIcon
-from PySide6.QtCore import QUrl, Qt, Slot
+from PySide6.QtCore import QUrl, Qt, Slot, QDirListing
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
-from PySide6.QtWidgets import QMainWindow, QSlider, QLabel, QGridLayout, QWidget, QPushButton
+from PySide6.QtWidgets import QMainWindow, QLabel, QSlider, QGridLayout, QWidget, QPushButton
 
 
 class MediaWindow(QMainWindow):
@@ -27,8 +26,10 @@ class MediaWindow(QMainWindow):
         # 2.2 Sliders
         # 2.2.1 Duration slider
         self.durationSlider = QSlider(Qt.Orientation.Horizontal)
-        self.durationLabel = QLabel("Totale duur: 0 seconden")
-        self.durationLabel.setAlignment(Qt.AlignCenter)
+        self.durationSlider.sliderMoved.connect(self.change_duration)
+
+        # self.player.positionChanged.connect(self.durationSlider.setValue)
+        self.player.durationChanged.connect(self.update_duration_slider_position)
 
         # 2.2.2 Volume slider
         self.volumeSlider = QSlider(Qt.Orientation.Vertical)
@@ -99,39 +100,42 @@ class MediaWindow(QMainWindow):
         layout.addWidget(previousSongButton, 1, 0)
 
         # 3.2 Slider
-        layout.addWidget(self.durationSlider)
-        layout.addWidget(self.durationLabel)
+        layout.addWidget(self.durationSlider, 2, 0, 1, 4)
 
-        layout.addWidget(self.volumeSlider)
+        layout.addWidget(self.volumeSlider, 1, 4, 2, 1)
 
-        # (Optioneel) Signalen verbinden (Signals & Slots)
-        # Wanneer de duur van het bestand bekend is, voer de functie uit
-        self.player.durationChanged.connect(self.update_duration)
+        # 3.3 Duration in numbers
+        rawSeconds = self.player.position() // 1000
+        seconds = rawSeconds
+        if rawSeconds % 60 == 0:
+            seconds = 0
+        minutes = self.player.position() // 60000
+        playedDuration = f"{minutes}:{seconds}"
 
-        # 4. Update the slider position
-        # 4.1 Duration slider
-        self.player.positionChanged.connect(self.durationSlider.setValue)
+        totalDuration = self.player.duration()
+        totalDurationSeconds = totalDuration % 60
+        totalDurationMinutes = totalDuration // 60
 
-        # 5. Load media
+        formattedDuration = QLabel(f"{playedDuration}/{totalDurationMinutes}:{totalDurationSeconds}")
+        layout.addWidget(formattedDuration)
+
+        # 4. Load media
         self.player.setSource(QUrl.fromLocalFile("./songs/wiley.mp3"))
         self.player.play()
 
-    def update_duration(self, duration_ms):
-        """Deze functie wordt aangeroepen zodra durationChanged afvuurt."""
-        # Zet de maximale waarde van de slider naar de totale duur in ms
-        self.durationSlider.setMaximum(duration_ms)
+        # 5. Get directory files
+        self.songs = QDirListing("/Users/seansteenhuis/Documents/Music/Songs")
+        # for song in self.songs:
+        #     print(f"Filename {song.absoluteFilePath()}")
 
-        # Bereken seconden voor de tekst
-        totale_seconden = duration_ms // 1000
-        self.durationLabel.setText(f"Totale duur: {totale_seconden} seconden")
+    def update_duration_slider_position(self, duration_ms):
+        if not self.durationSlider.isSliderDown():
+            self.durationSlider.setMaximum(duration_ms)
 
-    def change_volume(self, value):
-        self.volumeLevel = value / 100
+    def change_duration(self, durationValue):
+        self.player.setPosition(durationValue)
+
+    def change_volume(self, volumeValue):
+        self.volumeLevel = volumeValue / 100
         self.audioOutput.setVolume(self.volumeLevel)
         print(f"Current volume: {self.volumeLevel}")
-
-
-# app = QApplication(sys.argv)
-# venster = MediaWindow()
-# venster.show()
-# sys.exit(app.exec())
