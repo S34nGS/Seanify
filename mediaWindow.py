@@ -26,10 +26,12 @@ class MediaWindow(QMainWindow):
         # 2.2 Sliders
         # 2.2.1 Duration slider
         self.durationSlider = QSlider(Qt.Orientation.Horizontal)
-        self.durationSlider.sliderMoved.connect(self.change_duration)
+        self.durationSlider.setRange(0, 0)
 
-        self.player.durationChanged.connect(self.update_duration_slider_position)
-        self.player.positionChanged.connect(self.durationSlider.setValue)
+        self.player.positionChanged.connect(self.update_slider_position)
+        self.player.durationChanged.connect(self.update_duration_range)
+
+        self.durationSlider.sliderMoved.connect(self.change_duration)
 
         # 2.2.2 Volume slider
         self.volumeSlider = QSlider(Qt.Orientation.Vertical)
@@ -128,12 +130,15 @@ class MediaWindow(QMainWindow):
         # for song in self.songs:
         #     print(f"Filename {song.absoluteFilePath()}")
 
-    def update_duration_slider_position(self, duration_ms):
-        if not self.durationSlider.isSliderDown():
-            self.durationSlider.setMaximum(duration_ms)
+    def update_duration_range(self, duration_ms):
+        self.durationSlider.setRange(0, duration_ms)
 
-    def change_duration(self, durationValue):
-        self.player.setPosition(durationValue)
+    def update_slider_position(self, position_ms):
+        if not self.durationSlider.isSliderDown():
+            self.durationSlider.setValue(position_ms)
+
+    def change_duration(self, value):
+        self.player.setPosition(value)
 
     def change_volume(self, volumeValue):
         self.volumeLevel = volumeValue / 100
