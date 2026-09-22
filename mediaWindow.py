@@ -60,13 +60,13 @@ class MediaWindow(QMainWindow):
             print("Previous song started playing")
 
         # 2.3.2 Buttons themselves
-        playButton = QPushButton()
-        playButton.setIcon(QIcon("images/controls/play.png"))
-        playButton.clicked.connect(playMusic)
+        self.playButton = QPushButton()
+        self.playButton.setIcon(QIcon("images/controls/play.png"))
+        self.playButton.clicked.connect(playMusic)
 
-        pauseButton = QPushButton()
-        pauseButton.setIcon(QIcon("images/controls/pause.png"))
-        pauseButton.clicked.connect(pauseMusic)
+        self.pauseButton = QPushButton()
+        self.pauseButton.setIcon(QIcon("images/controls/pause.png"))
+        self.pauseButton.clicked.connect(pauseMusic)
 
         nextSongButton = QPushButton()
         nextSongButton.setIcon(QIcon("images/controls/next-button.png"))
@@ -89,8 +89,8 @@ class MediaWindow(QMainWindow):
 
         button_size = (30, 30)
 
-        playButton.setFixedSize(*button_size)
-        pauseButton.setFixedSize(*button_size)
+        self.playButton.setFixedSize(*button_size)
+        self.pauseButton.setFixedSize(*button_size)
         nextSongButton.setFixedSize(*button_size)
         previousSongButton.setFixedSize(*button_size)
 
@@ -105,13 +105,15 @@ class MediaWindow(QMainWindow):
 
         # 3. Adding widgets
         # 3.1 Control buttons
-        layout.addWidget(playButton, 1, 2)
-        layout.addWidget(pauseButton, 1, 1)
-        layout.addWidget(nextSongButton, 1, 3)
+        self.player.playbackStateChanged.connect(self.update_play_button)
+        layout.addWidget(self.playButton, 1, 1)
+        layout.addWidget(self.pauseButton, 1, 1)
+
+        layout.addWidget(nextSongButton, 1, 2)
         layout.addWidget(previousSongButton, 1, 0)
 
         # 3.2 Slider
-        layout.addWidget(self.durationSlider, 2, 0, 1, 4)
+        layout.addWidget(self.durationSlider, 2, 0, 1, 3)
 
         layout.addWidget(self.volumeSlider, 1, 4, 2, 1)
 
@@ -145,6 +147,12 @@ class MediaWindow(QMainWindow):
         self.songs = QDirListing("/Users/seansteenhuis/Documents/Music/Songs")
         # for song in self.songs:
         #     print(f"Filename {song.absoluteFilePath()}")
+
+    def update_play_button(self, state):
+        is_playing = state == QMediaPlayer.PlaybackState.PlayingState
+
+        self.playButton.setVisible(not is_playing)
+        self.pauseButton.setVisible(is_playing)
 
     def update_title(self):
         title = self.player.metaData().value(QMediaMetaData.Title)
